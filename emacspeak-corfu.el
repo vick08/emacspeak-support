@@ -30,9 +30,15 @@
 ;;   Required modules:
 
 (eval-when-compile (require 'cl-lib))
-(cl-declaim (optimize (safety 0) (speed 3)))
 (require 'emacspeak-preamble)
 (require 'corfu nil 'noerror)
+
+;;;  Silence byte-compiler about special variables:
+
+(defvar corfu--candidates)
+(defvar corfu--index)
+(defvar corfu--metadata)
+(defvar completion-in-region-mode)
 
 ;;;  Forward declarations:
 
@@ -60,7 +66,6 @@
 
 (defun emacspeak-corfu--current-candidate ()
   "Return the currently selected candidate in Corfu."
-  (cl-declare (special corfu--candidates corfu--index))
   (when (and (bound-and-true-p corfu--candidates)
              (bound-and-true-p corfu--index)
              (>= corfu--index 0)
@@ -69,7 +74,6 @@
 
 (defun emacspeak-corfu--candidate-with-annotation ()
   "Return current candidate with its annotation if available."
-  (cl-declare (special corfu--metadata))
   (let ((candidate (emacspeak-corfu--current-candidate)))
     (when candidate
       (let* ((metadata (and (boundp 'corfu--metadata) corfu--metadata))
@@ -82,7 +86,6 @@
 
 (defun emacspeak-corfu--speak-candidate ()
   "Speak current candidate with position info."
-  (cl-declare (special corfu--index corfu--candidates))
   (let ((candidate (emacspeak-corfu--candidate-with-annotation))
         (total (length corfu--candidates))
         (index (1+ corfu--index)))
@@ -145,7 +148,6 @@
 
 (defadvice corfu--update (after emacspeak pre act comp)
   "Speak candidate updates as they happen."
-  (cl-declare (special corfu--index corfu--candidates))
   (when (and (boundp 'corfu--index)
              (boundp 'corfu--candidates)
              corfu--candidates)
@@ -164,7 +166,6 @@
 
 (defun emacspeak-corfu--completion-hook ()
   "Hook for completion-in-region-mode changes."
-  (cl-declare (special completion-in-region-mode))
   (cond
    (completion-in-region-mode
     (emacspeak-icon 'open-object))

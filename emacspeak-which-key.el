@@ -31,9 +31,14 @@
 ;;   Required modules:
 
 (eval-when-compile (require 'cl-lib))
-(cl-declaim (optimize (safety 0) (speed 3)))
 (require 'emacspeak-preamble)
 (require 'which-key nil 'noerror)
+
+;;;  Silence byte-compiler about special variables:
+
+(defvar which-key--buffer)
+(defvar which-key--pages-obj)
+(defvar which-key-init-buffer-hook)
 
 ;;;  Forward declarations:
 
@@ -67,7 +72,6 @@
 
 (defun emacspeak-which-key--speak-page ()
   "Speak current which-key page content."
-  (cl-declare (special which-key--buffer which-key--pages-obj))
   (when (and (bound-and-true-p which-key--buffer)
              (buffer-live-p which-key--buffer))
     (with-current-buffer which-key--buffer
@@ -78,7 +82,6 @@
 
 (defun emacspeak-which-key--page-info ()
   "Return current page info as string."
-  (cl-declare (special which-key--pages-obj))
   (when (bound-and-true-p which-key--pages-obj)
     (let* ((pages which-key--pages-obj)
            (current (1+ (plist-get pages :page-nums)))
@@ -111,14 +114,16 @@
 
 (defadvice which-key--show-page (after emacspeak pre act comp)
   "Speak the which-key page."
-  (when emacspeak-which-key--auto-speak
+  (when (and emacspeak-which-key--auto-speak
+             (ems-interactive-p))
     (emacspeak-icon 'help)
     (emacspeak-which-key--speak-page)))
 
 (defadvice which-key--hide-popup (after emacspeak pre act comp)
   "Announce popup hidden."
-  (dtk-stop 'all)
-  (emacspeak-icon 'close-object))
+  (when (ems-interactive-p)
+    (dtk-stop 'all)
+    (emacspeak-icon 'close-object)))
 
 (defadvice which-key-abort (after emacspeak pre act comp)
   "Speak abort feedback."
@@ -184,7 +189,6 @@
 
 (defun emacspeak-which-key-setup ()
   "Setup Emacspeak support for Which-Key."
-  (cl-declare (special which-key-init-buffer-hook))
   (when (boundp 'which-key-init-buffer-hook)
     (add-hook 'which-key-init-buffer-hook
               #'(lambda () (emacspeak-icon 'open-object)))))
