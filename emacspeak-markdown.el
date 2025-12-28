@@ -27,7 +27,7 @@
 ;; structures. Instead of hearing "three pounds space", users will hear
 ;; "heading level 3" when navigating headers.
 ;;
-;; This module also provides `es-markdown-reading-mode`, a minor mode
+;; This module also provides `emacspeak-markdown-reading-mode`, a minor mode
 ;; that strips markup syntax when reading content, so you hear "car" instead
 ;; of "star star car star star" for **car**. Voice personalities still apply
 ;; to indicate emphasis, headings, etc.
@@ -67,7 +67,7 @@
 
 ;;;  Customization:
 
-(defcustom es-markdown-auto-reading-mode nil
+(defcustom emacspeak-markdown-auto-reading-mode nil
   "When non-nil, automatically enable reading mode in markdown buffers.
 Reading mode strips markup syntax when speaking lines, making content
 easier to listen to without hearing 'star star' for bold, 'pound' for
@@ -380,31 +380,31 @@ This makes reading more pleasant by removing syntax noise like
 
 ;;;  Reading mode minor mode:
 
-(defvar-local es-markdown-reading-mode nil
+(defvar-local emacspeak-markdown-reading-mode nil
   "Non-nil when markdown reading mode is active.")
 
-(defun es-markdown-reading-mode (&optional arg)
+(defun emacspeak-markdown-reading-mode (&optional arg)
   "Toggle markdown reading mode for clean speech without markup noise.
 When enabled, speaking lines strips markdown syntax characters while
 preserving voice personalities. Heading and list announcements work
 regardless of this mode."
   (interactive (list (or current-prefix-arg 'toggle)))
-  (setq es-markdown-reading-mode
+  (setq emacspeak-markdown-reading-mode
         (cond
-         ((eq arg 'toggle) (not es-markdown-reading-mode))
+         ((eq arg 'toggle) (not emacspeak-markdown-reading-mode))
          ((null arg) t)
          ((> (prefix-numeric-value arg) 0) t)
          (t nil)))
-  (message (if es-markdown-reading-mode
+  (message (if emacspeak-markdown-reading-mode
                "Markdown reading mode enabled - markup stripped from speech"
              "Markdown reading mode disabled")))
 
-(defadvice emacspeak-speak-line (around es-markdown-reading pre act comp)
+(defadvice emacspeak-speak-line (around emacspeak-markdown-reading pre act comp)
   "In markdown mode, improve heading and list announcements.
 When reading mode is enabled, also strip markup."
   (if (and (boundp 'major-mode)
            (eq major-mode 'markdown-mode))
-      (if es-markdown-reading-mode
+      (if emacspeak-markdown-reading-mode
           (emacspeak-markdown--speak-line-clean)
         ;; Even without reading mode, announce headings properly
         (let* ((heading-info (emacspeak-markdown--get-heading-info))
@@ -565,7 +565,7 @@ Returns just the visible text portion of markdown links."
 
 ;;;  Interactive convenience command:
 
-(defun es-markdown-speak-heading ()
+(defun emacspeak-markdown-speak-heading ()
   "Speak the current heading with level information."
   (interactive)
   (let ((info (emacspeak-markdown--get-heading-info)))
@@ -578,20 +578,20 @@ Returns just the visible text portion of markdown links."
 (defun emacspeak-markdown-setup ()
   "Setup Emacspeak support for Markdown-Mode."
   (when (boundp 'markdown-mode-map)
-    (define-key markdown-mode-map (kbd "C-c C-s h") 'es-markdown-speak-heading)
-    (define-key markdown-mode-map (kbd "C-c C-s r") 'es-markdown-reading-mode)))
+    (define-key markdown-mode-map (kbd "C-c C-s h") 'emacspeak-markdown-speak-heading)
+    (define-key markdown-mode-map (kbd "C-c C-s r") 'emacspeak-markdown-reading-mode)))
 
 (defun emacspeak-markdown-mode-hook ()
   "Hook function to setup Emacspeak markdown features in markdown buffers."
-  (when es-markdown-auto-reading-mode
-    (es-markdown-reading-mode 1)))
+  (when emacspeak-markdown-auto-reading-mode
+    (emacspeak-markdown-reading-mode 1)))
 
 (eval-after-load "markdown-mode"
   (lambda ()
     (emacspeak-markdown-setup)
     (add-hook 'markdown-mode-hook 'emacspeak-markdown-mode-hook)
     ;; Enable heading/list announcements by default
-    (ad-enable-advice 'emacspeak-speak-line 'around 'es-markdown-reading)
+    (ad-enable-advice 'emacspeak-speak-line 'around 'emacspeak-markdown-reading)
     (ad-activate 'emacspeak-speak-line)))
 
 ;;;  Enable/Disable support:
@@ -621,26 +621,26 @@ Returns just the visible text portion of markdown links."
     (markdown-move-subtree-down after))
   "List of advised functions for Emacspeak Markdown support.")
 
-(defun es-markdown-enable ()
+(defun emacspeak-markdown-enable ()
   "Enable Emacspeak support for Markdown."
   (interactive)
   (dolist (advice emacspeak-markdown--advice-list)
     (ad-enable-advice (car advice) (cadr advice) 'emacspeak)
     (ad-activate (car advice)))
   ;; Enable the line-reading advice for headings/lists
-  (ad-enable-advice 'emacspeak-speak-line 'around 'es-markdown-reading)
+  (ad-enable-advice 'emacspeak-speak-line 'around 'emacspeak-markdown-reading)
   (ad-activate 'emacspeak-speak-line)
   (emacspeak-markdown-setup)
   (message "Enabled Emacspeak Markdown support"))
 
-(defun es-markdown-disable ()
+(defun emacspeak-markdown-disable ()
   "Disable Emacspeak support for Markdown."
   (interactive)
   (dolist (advice emacspeak-markdown--advice-list)
     (ad-disable-advice (car advice) (cadr advice) 'emacspeak)
     (ad-activate (car advice)))
   ;; Disable the line-reading advice
-  (ad-disable-advice 'emacspeak-speak-line 'around 'es-markdown-reading)
+  (ad-disable-advice 'emacspeak-speak-line 'around 'emacspeak-markdown-reading)
   (ad-activate 'emacspeak-speak-line)
   (when (boundp 'markdown-mode-map)
     (define-key markdown-mode-map (kbd "C-c C-s h") nil)
