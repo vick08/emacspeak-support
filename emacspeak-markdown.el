@@ -148,10 +148,10 @@ This makes reading more pleasant by removing syntax noise like
       (setq result (replace-regexp-in-string "`\\([^`]+\\)`" "\\1" result))
       ;; Remove strikethrough ~~
       (setq result (replace-regexp-in-string "~~\\([^~]+\\)~~" "\\1" result))
-      ;; Remove link markup [text](url) -> text
-      (setq result (replace-regexp-in-string "\\[\\([^]]+\\)\\](([^)]+))" "\\1" result))
-      ;; Remove reference-style link markup [text][ref] -> text
-      (setq result (replace-regexp-in-string "\\[\\([^]]+\\)\\]\\[[^]]*\\]" "\\1" result))
+      ;; Remove link markup [text](url) -> text (link)
+      (setq result (replace-regexp-in-string "\\[\\([^]]+\\)\\](\\([^)]+\\))" "\\1 link" result))
+      ;; Remove reference-style link markup [text][ref] -> text (link)
+      (setq result (replace-regexp-in-string "\\[\\([^]]+\\)\\]\\[[^]]*\\]" "\\1 link" result))
       ;; Remove list markers (-, *, +, numbers)
       (setq result (replace-regexp-in-string "^\\s-*[-*+]\\s-+" "" result))
       (setq result (replace-regexp-in-string "^\\s-*[0-9]+\\.\\s-+" "" result))
@@ -278,17 +278,37 @@ When reading mode is enabled, also strip markup."
 
 ;;;  Advice link navigation:
 
+(defun emacspeak-markdown--get-link-text ()
+  "Extract and return the link text at point without the URL.
+Returns just the visible text portion of markdown links."
+  (save-excursion
+    (let* ((line (thing-at-point 'line t))
+           (text line))
+      ;; Extract text from inline links [text](url)
+      (when (string-match "\\[\\([^]]+\\)\\](\\([^)]+\\))" text)
+        (setq text (match-string 1 text)))
+      ;; Extract text from reference links [text][ref]
+      (when (string-match "\\[\\([^]]+\\)\\]\\[[^]]*\\]" text)
+        (setq text (match-string 1 text)))
+      ;; Extract text from autolinks <url>
+      (when (string-match "<\\([^>]+\\)>" text)
+        (setq text (match-string 1 text)))
+      ;; Clean up the text
+      (string-trim text))))
+
 (defadvice markdown-next-link (after emacspeak pre act comp)
   "Speak the link we moved to."
   (when (ems-interactive-p)
     (emacspeak-icon 'button)
-    (dtk-speak (concat "link: " (thing-at-point 'line t)))))
+    (let ((link-text (emacspeak-markdown--get-link-text)))
+      (dtk-speak (concat "link: " link-text)))))
 
 (defadvice markdown-previous-link (after emacspeak pre act comp)
   "Speak the link we moved to."
   (when (ems-interactive-p)
     (emacspeak-icon 'button)
-    (dtk-speak (concat "link: " (thing-at-point 'line t)))))
+    (let ((link-text (emacspeak-markdown--get-link-text)))
+      (dtk-speak (concat "link: " link-text)))))
 
 ;;;  Advice list item movement:
 
