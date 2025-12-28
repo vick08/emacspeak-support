@@ -29,3 +29,12 @@ dist/
 # Emacs desktop file
 .emacs.desktop
 .emacs.desktop.lock
+
+# AI instruction files
+CLAUDE.md
+GEMINI.md
+AGENTS.md
+*-AI.md
+*-ai.md
+AI-*.md
+ai-*.md

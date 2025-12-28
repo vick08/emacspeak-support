@@ -179,6 +179,41 @@
 
 (eval-after-load "corfu" #'emacspeak-corfu-setup)
 
+;;;  Enable/Disable support:
+
+(defvar emacspeak-corfu--advice-list
+  '((corfu-insert around)
+    (corfu-quit after)
+    (corfu-reset after)
+    (corfu-insert-separator after)
+    (corfu-complete after)
+    (corfu-next after)
+    (corfu-previous after)
+    (corfu-first after)
+    (corfu-last after)
+    (corfu-scroll-up after)
+    (corfu-scroll-down after)
+    (corfu--update after))
+  "List of advised functions for Emacspeak Corfu support.")
+
+(defun emacspeak-corfu-enable ()
+  "Enable Emacspeak support for Corfu."
+  (interactive)
+  (dolist (advice emacspeak-corfu--advice-list)
+    (ad-enable-advice (car advice) (cadr advice) 'emacspeak)
+    (ad-activate (car advice)))
+  (emacspeak-corfu-setup)
+  (message "Enabled Emacspeak Corfu support"))
+
+(defun emacspeak-corfu-disable ()
+  "Disable Emacspeak support for Corfu."
+  (interactive)
+  (dolist (advice emacspeak-corfu--advice-list)
+    (ad-disable-advice (car advice) (cadr advice) 'emacspeak)
+    (ad-activate (car advice)))
+  (remove-hook 'completion-in-region-mode-hook #'emacspeak-corfu--completion-hook)
+  (message "Disabled Emacspeak Corfu support"))
+
 ;;;  Provide the module:
 
 (provide 'emacspeak-corfu)

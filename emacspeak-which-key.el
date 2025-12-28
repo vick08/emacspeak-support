@@ -194,6 +194,45 @@
 
 (eval-after-load "which-key" #'emacspeak-which-key-setup)
 
+;;;  Enable/Disable support:
+
+(defvar emacspeak-which-key--advice-list
+  '((which-key--show-page after)
+    (which-key--hide-popup after)
+    (which-key-abort after)
+    (which-key-undo-key after)
+    (which-key-show-standard-help before)
+    (which-key-show-next-page-cycle after)
+    (which-key-show-previous-page-cycle after)
+    (which-key-show-next-page-no-cycle after)
+    (which-key-show-previous-page-no-cycle after)
+    (which-key-show-top-level after)
+    (which-key-show-major-mode after)
+    (which-key-show-full-major-mode after)
+    (which-key-show-minor-mode-keymap after)
+    (which-key-show-keymap after))
+  "List of advised functions for Emacspeak Which-Key support.")
+
+(defun emacspeak-which-key-enable ()
+  "Enable Emacspeak support for Which-Key."
+  (interactive)
+  (dolist (advice emacspeak-which-key--advice-list)
+    (ad-enable-advice (car advice) (cadr advice) 'emacspeak)
+    (ad-activate (car advice)))
+  (emacspeak-which-key-setup)
+  (message "Enabled Emacspeak Which-Key support"))
+
+(defun emacspeak-which-key-disable ()
+  "Disable Emacspeak support for Which-Key."
+  (interactive)
+  (dolist (advice emacspeak-which-key--advice-list)
+    (ad-disable-advice (car advice) (cadr advice) 'emacspeak)
+    (ad-activate (car advice)))
+  (when (boundp 'which-key-init-buffer-hook)
+    (remove-hook 'which-key-init-buffer-hook
+                 #'(lambda () (emacspeak-icon 'open-object))))
+  (message "Disabled Emacspeak Which-Key support"))
+
 ;;;  Provide the module:
 
 (provide 'emacspeak-which-key)
