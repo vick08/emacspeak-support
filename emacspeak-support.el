@@ -24,16 +24,6 @@
 ;; This module provides a unified interface for enabling and disabling
 ;; Emacspeak support extensions for modern Emacs packages. Each extension
 ;; can be toggled on or off independently.
-;;
-;; Usage:
-;;   M-x emacspeak-support-enable-corfu
-;;   M-x emacspeak-support-enable-which-key
-;;   M-x emacspeak-support-enable-markdown
-;;   M-x emacspeak-support-enable-helm
-;;   M-x emacspeak-support-toggle-<extension>
-;;   M-x emacspeak-support-enable-all
-;;   M-x emacspeak-support-disable-all
-;;   M-x emacspeak-support-status
 
 ;;; Code:
 
@@ -41,13 +31,21 @@
 
 (require 'emacspeak-preamble)
 
+;;;  Directory tracking:
+
+(defvar emacspeak-support--directory
+  (file-name-directory (or load-file-name buffer-file-name))
+  "Directory where emacspeak-support is located.
+Captured during load to avoid nil errors when called from non-file buffers.")
+
 ;;;  State tracking:
 
 (defvar emacspeak-support--extensions
   '((corfu . "emacspeak-corfu")
     (which-key . "emacspeak-which-key")
     (markdown . "emacspeak-markdown")
-    (helm . "emacspeak-helm"))
+    (helm . "emacspeak-helm")
+    (agent-shell . "emacspeak-agent-shell"))
   "Alist of extension symbols to file names.")
 
 (defvar emacspeak-support--enabled '()
@@ -58,9 +56,8 @@
 (defun emacspeak-support--extension-file (extension)
   "Return the file path for EXTENSION."
   (let ((filename (cdr (assq extension emacspeak-support--extensions))))
-    (when filename
-      (concat (file-name-directory (or load-file-name buffer-file-name))
-              filename ".el"))))
+    (when (and filename emacspeak-support--directory)
+      (concat emacspeak-support--directory filename ".el"))))
 
 (defun emacspeak-support--extension-enabled-p (extension)
   "Return non-nil if EXTENSION is currently enabled."
@@ -204,6 +201,21 @@
   "Toggle Emacspeak support for Helm."
   (interactive)
   (emacspeak-support-toggle 'helm))
+
+(defun emacspeak-support-enable-agent-shell ()
+  "Enable Emacspeak support for agent-shell."
+  (interactive)
+  (emacspeak-support-enable 'agent-shell))
+
+(defun emacspeak-support-disable-agent-shell ()
+  "Disable Emacspeak support for agent-shell."
+  (interactive)
+  (emacspeak-support-disable 'agent-shell))
+
+(defun emacspeak-support-toggle-agent-shell ()
+  "Toggle Emacspeak support for agent-shell."
+  (interactive)
+  (emacspeak-support-toggle 'agent-shell))
 
 ;;;  Provide the module:
 
